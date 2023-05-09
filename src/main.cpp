@@ -4,25 +4,22 @@ typedef enum {  NONE, M1 } states;
 
 states state = NONE;
 
-#define readA bitRead(PIND,2) //faster than digitalRead() and attached to Pin A
-#define readB bitRead(PIND,3) //faster than digitalRead() and attached to Pin B
-#define readI bitRead(PIND,4) //faster than digitalRead() and attached to Pin B
-
-// Motor connections
-int enA = 5;
-int in1 = 6;
-int in2 = 7;
-
-// led for limiter
-int led = 13;
-
 // encoder connections
 int encoderPinA = 2;
 int encoderPinB = 3;
 int limiterPin  = 4;
 
-volatile int count = 0;
-volatile bool hitLimiter = false;
+// Motor connections
+int pwmPin = 5;
+int enableForwardPin = 6;
+int enableBackwardPin = 7;
+
+// led for limiter
+int led = 13;
+
+volatile int count          = 0;
+volatile bool statePhaseA    = false;
+volatile bool statePhaseB    = false;
 
 int ProtectedCount = 0;
 int TargetCount = 0;
@@ -30,50 +27,41 @@ int TargetCount = 0;
 int inputValue = 0;
 
 void isrA() {
-  if(readB != readA) 
-  {
-    count ++;
-  } 
-  else 
-  {
-    count --;
-  }
+  statePhaseA = digitalRead(encoderPinA) == LOW;
+  count += (statePhaseA != statePhaseB) ? -1 : +1;
 }
 
 void isrB() {
-  if (readA == readB) 
-  {
-    count ++;
-  } 
-  else 
-  {
-    count --;
-  }
+  statePhaseB = digitalRead(encoderPinB) == LOW;
+  count += (statePhaseA == statePhaseB) ? -1 : +1;
 }
 
 void setup() {
   Serial.begin(115200);
 
 	// Set all the motor control pins to outputs
-	pinMode(enA, OUTPUT);
-	pinMode(in1, OUTPUT);
-	pinMode(in2, OUTPUT);
+	pinMode(pwmPin, OUTPUT);
+	pinMode(enableForwardPin, OUTPUT);
+	pinMode(enableBackwardPin, OUTPUT);
 
   pinMode(encoderPinA, INPUT_PULLUP);
   pinMode(encoderPinB, INPUT_PULLUP);
   pinMode(limiterPin, INPUT_PULLUP);
   
+  statePhaseA = (bool)digitalRead(encoderPinA);
+  statePhaseB = (bool)digitalRead(encoderPinB);
+
   attachInterrupt(digitalPinToInterrupt(encoderPinA), isrA, CHANGE);
   attachInterrupt(digitalPinToInterrupt(encoderPinB), isrB, CHANGE);
 	
 	// Turn off motors - Initial state
-	digitalWrite(in1, LOW);
-	digitalWrite(in2, LOW);
+	digitalWrite(enableForwardPin, LOW);
+	digitalWrite(enableBackwardPin, LOW);
 }
 
 void setM1MotorTarget (const unsigned int value)
 {
-  TargetCount = value;
+  TargetCount = 100;
 }
 
 void handleState ()
@@ -122,30 +110,30 @@ void loop() {
   ProtectedCount = count;
   interrupts();
 
-  analogWrite(enA, 127);
+  analogWrite(pwmPin, 30);
   
-  if(ProtectedCount == TargetCount) 
+  if(ProtectedCount == 100) 
   {
-    digitalWrite(in1, LOW);
-	  digitalWrite(in2, LOW);
+    digitalWrite(enableForwardPin, LOW);
+	  digitalWrite(enableBackwardPin, LOW);
   } 
-  else if (ProtectedCount > TargetCount)
+  else if (ProtectedCount > 100)
   {
-    digitalWrite(in1, LOW);
-	  digitalWrite(in2, HIGH);
+    digitalWrite(enableForwardPin, LOW);
+	  digitalWrite(enableBackwardPin, HIGH);
   }
-  else if (ProtectedCount < TargetCount)
+  else if (ProtectedCount < 100)
   {
-    digitalWrite(in1, HIGH);
-	  digitalWrite(in2, LOW);
+    digitalWrite(enableForwardPin, HIGH);
+	  digitalWrite(enableBackwardPin, LOW);
   }
 
-  if (readI == HIGH)
-  {
-    digitalWrite(in1, LOW);
-	  digitalWrite(in2, LOW);
-    digitalWrite(led, HIGH);
-  }
+  // if (readI == LOW)
+  // {
+  //   digitalWrite(enableForwardPin, LOW);
+	//   digitalWrite(enableBackwardPin, LOW);
+  //   digitalWrite(led, HIGH);
+  // }
 
   Serial.println(ProtectedCount);
 }
