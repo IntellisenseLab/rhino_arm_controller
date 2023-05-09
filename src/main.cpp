@@ -4,22 +4,22 @@ typedef enum {  NONE, M1 } states;
 
 states state = NONE;
 
-#define readA bitRead(PIND,22) //faster than digitalRead() and attached to Pin A
-#define readB bitRead(PIND,24) //faster than digitalRead() and attached to Pin B
-#define readO bitRead(PIND,26) //faster than digitalRead() and attached to Pin B
+#define readA bitRead(PIND,2) //faster than digitalRead() and attached to Pin A
+#define readB bitRead(PIND,3) //faster than digitalRead() and attached to Pin B
+#define readI bitRead(PIND,4) //faster than digitalRead() and attached to Pin B
 
 // Motor connections
-int enA = 2;
-int in1 = 28;
-int in2 = 30;
+int enA = 5;
+int in1 = 6;
+int in2 = 7;
 
 // led for limiter
 int led = 13;
 
 // encoder connections
-int encoderPinA = 22;
-int encoderPinB = 24;
-int limiterPin  = 26;
+int encoderPinA = 2;
+int encoderPinB = 3;
+int limiterPin  = 4;
 
 volatile int count = 0;
 volatile bool hitLimiter = false;
@@ -51,13 +51,6 @@ void isrB() {
   }
 }
 
-void isrStop() {
-  if (readO == LOW) 
-  {
-    hitLimiter = true;
-  }
-}
-
 void setup() {
   Serial.begin(115200);
 
@@ -72,7 +65,6 @@ void setup() {
   
   attachInterrupt(digitalPinToInterrupt(encoderPinA), isrA, CHANGE);
   attachInterrupt(digitalPinToInterrupt(encoderPinB), isrB, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(encoderPinB), isrStop, FALLING);
 	
 	// Turn off motors - Initial state
 	digitalWrite(in1, LOW);
@@ -130,7 +122,7 @@ void loop() {
   ProtectedCount = count;
   interrupts();
 
-  analogWrite(enA, 255);
+  analogWrite(enA, 127);
   
   if(ProtectedCount == TargetCount) 
   {
@@ -148,11 +140,12 @@ void loop() {
 	  digitalWrite(in2, LOW);
   }
 
-  if (hitLimiter)
+  if (readI == HIGH)
   {
     digitalWrite(in1, LOW);
 	  digitalWrite(in2, LOW);
     digitalWrite(led, HIGH);
-    Serial.println(ProtectedCount);
   }
+
+  Serial.println(ProtectedCount);
 }
