@@ -39,10 +39,10 @@ void isrB() {
 void setup() {
   Serial.begin(115200);
 
-	// Set all the motor control pins to outputs
-	pinMode(pwmPin, OUTPUT);
-	pinMode(enableForwardPin, OUTPUT);
-	pinMode(enableBackwardPin, OUTPUT);
+  // Set all the motor control pins to outputs
+  pinMode(pwmPin, OUTPUT);
+  pinMode(enableForwardPin, OUTPUT);
+  pinMode(enableBackwardPin, OUTPUT);
 
   pinMode(encoderPinA, INPUT_PULLUP);
   pinMode(encoderPinB, INPUT_PULLUP);
@@ -53,10 +53,10 @@ void setup() {
 
   attachInterrupt(digitalPinToInterrupt(encoderPinA), isrA, CHANGE);
   attachInterrupt(digitalPinToInterrupt(encoderPinB), isrB, CHANGE);
-	
-	// Turn off motors - Initial state
-	digitalWrite(enableForwardPin, LOW);
-	digitalWrite(enableBackwardPin, LOW);
+  
+  // Turn off motors - Initial state
+  digitalWrite(enableForwardPin, LOW);
+  digitalWrite(enableBackwardPin, LOW);
 }
 
 void setM1MotorTarget (const unsigned int value)
@@ -115,23 +115,23 @@ void loop() {
   if(ProtectedCount == 100) 
   {
     digitalWrite(enableForwardPin, LOW);
-	  digitalWrite(enableBackwardPin, LOW);
+    digitalWrite(enableBackwardPin, LOW);
   } 
   else if (ProtectedCount > 100)
   {
     digitalWrite(enableForwardPin, LOW);
-	  digitalWrite(enableBackwardPin, HIGH);
+    digitalWrite(enableBackwardPin, HIGH);
   }
   else if (ProtectedCount < 100)
   {
     digitalWrite(enableForwardPin, HIGH);
-	  digitalWrite(enableBackwardPin, LOW);
+    digitalWrite(enableBackwardPin, LOW);
   }
 
   // if (readI == LOW)
   // {
   //   digitalWrite(enableForwardPin, LOW);
-	//   digitalWrite(enableBackwardPin, LOW);
+  //   digitalWrite(enableBackwardPin, LOW);
   //   digitalWrite(led, HIGH);
   // }
 
